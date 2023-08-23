@@ -35,18 +35,19 @@ func setRules(rules []rbacv1.PolicyRule) core.MetaMutator {
 
 func TestObjectDiffer_Structured(t *testing.T) {
 	testCases := []struct {
-		name string
-		muts []core.MetaMutator
-		want string
+		name    string
+		mutsOld []core.MetaMutator
+		mutsNew []core.MetaMutator
+		want    string
 	}{
 		{
-			name: "No changes",
-			muts: []core.MetaMutator{},
-			want: "",
+			name:    "No changes",
+			mutsNew: []core.MetaMutator{},
+			want:    "",
 		},
 		{
 			name: "Add a label",
-			muts: []core.MetaMutator{
+			mutsNew: []core.MetaMutator{
 				core.Labels(map[string]string{
 					"this": "that",
 					"here": "there",
@@ -56,7 +57,7 @@ func TestObjectDiffer_Structured(t *testing.T) {
 		},
 		{
 			name: "Change a label",
-			muts: []core.MetaMutator{
+			mutsNew: []core.MetaMutator{
 				core.Labels(map[string]string{
 					"this": "is not that",
 				}),
@@ -65,14 +66,14 @@ func TestObjectDiffer_Structured(t *testing.T) {
 		},
 		{
 			name: "Remove a label",
-			muts: []core.MetaMutator{
+			mutsNew: []core.MetaMutator{
 				core.Labels(map[string]string{}),
 			},
 			want: ".metadata.labels\n.metadata.labels.this",
 		},
 		{
 			name: "Add a rule",
-			muts: []core.MetaMutator{
+			mutsNew: []core.MetaMutator{
 				setRules([]rbacv1.PolicyRule{
 					{
 						APIGroups: []string{""},
@@ -90,7 +91,7 @@ func TestObjectDiffer_Structured(t *testing.T) {
 		},
 		{
 			name: "Change a rule",
-			muts: []core.MetaMutator{
+			mutsNew: []core.MetaMutator{
 				setRules([]rbacv1.PolicyRule{
 					{
 						APIGroups: []string{""},
@@ -103,9 +104,42 @@ func TestObjectDiffer_Structured(t *testing.T) {
 		},
 		{
 			name: "Remove a rule",
-			muts: []core.MetaMutator{
+			mutsNew: []core.MetaMutator{
 				setRules([]rbacv1.PolicyRule{}),
 			},
+			want: ".rules",
+		},
+		{
+			name: "Switch the rule order",
+			mutsOld: []core.MetaMutator{
+				setRules([]rbacv1.PolicyRule{
+					{
+						APIGroups: []string{""},
+						Resources: []string{"pods"},
+						Verbs:     []string{"get", "list"},
+					},
+					{
+						APIGroups: []string{""},
+						Resources: []string{"namespaces"},
+						Verbs:     []string{"get", "list"},
+					},
+				}),
+			},
+			mutsNew: []core.MetaMutator{
+				setRules([]rbacv1.PolicyRule{
+					{
+						APIGroups: []string{""},
+						Resources: []string{"namespaces"},
+						Verbs:     []string{"get", "list"},
+					},
+					{
+						APIGroups: []string{""},
+						Resources: []string{"pods"},
+						Verbs:     []string{"get", "list"},
+					},
+				}),
+			},
+			// TODO(b/297234996): the two objects are semantically equal, so the diff set should be empty.
 			want: ".rules",
 		},
 	}
@@ -118,8 +152,8 @@ func TestObjectDiffer_Structured(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			oldObj := roleForTest()
-			newObj := roleForTest(tc.muts...)
+			oldObj := roleForTest(tc.mutsOld...)
+			newObj := roleForTest(tc.mutsNew...)
 			got, err := od.FieldDiff(oldObj, newObj)
 			if err != nil {
 				t.Errorf("Got unexpected error: %v", err)
@@ -151,18 +185,19 @@ func roleForTest(muts ...core.MetaMutator) *rbacv1.Role {
 
 func TestObjectDiffer_Unstructured(t *testing.T) {
 	testCases := []struct {
-		name string
-		muts []mutator
-		want string
+		name    string
+		mutsOld []mutator
+		mutsNew []mutator
+		want    string
 	}{
 		{
-			name: "No changes",
-			muts: []mutator{},
-			want: "",
+			name:    "No changes",
+			mutsNew: []mutator{},
+			want:    "",
 		},
 		{
 			name: "Add a label",
-			muts: []mutator{
+			mutsNew: []mutator{
 				setLabels(t, map[string]interface{}{
 					"this": "that",
 					"here": "there",
@@ -172,7 +207,7 @@ func TestObjectDiffer_Unstructured(t *testing.T) {
 		},
 		{
 			name: "Change a label",
-			muts: []mutator{
+			mutsNew: []mutator{
 				setLabels(t, map[string]interface{}{
 					"this": "is not that",
 				}),
@@ -181,10 +216,95 @@ func TestObjectDiffer_Unstructured(t *testing.T) {
 		},
 		{
 			name: "Remove a label",
-			muts: []mutator{
+			mutsNew: []mutator{
 				setLabels(t, map[string]interface{}{}),
 			},
 			want: ".metadata.labels.this",
+		},
+		{
+			name: "Add a rule",
+			mutsNew: []mutator{
+				setRulesUnstructured(t, []interface{}{
+					map[string]interface{}{
+						"apiGroups": []interface{}{""},
+						"resources": []interface{}{"namespaces"},
+						"verbs":     []interface{}{"get", "list"},
+					},
+					map[string]interface{}{
+						"apiGroups": []interface{}{""},
+						"resources": []interface{}{"pods"},
+						"verbs":     []interface{}{"get", "list"},
+					},
+				}),
+			},
+			want: ".rules",
+		},
+		{
+			name: "Change a rule",
+			mutsNew: []mutator{
+				setRulesUnstructured(t, []interface{}{
+					map[string]interface{}{
+						"apiGroups": []interface{}{""},
+						"resources": []interface{}{"namespaces"},
+						"verbs":     []interface{}{"get", "list", "delete"},
+					},
+				}),
+			},
+			want: ".rules",
+		},
+		{
+			name: "Remove a rule",
+			mutsOld: []mutator{
+				setRulesUnstructured(t, []interface{}{
+					map[string]interface{}{
+						"apiGroups": []interface{}{""},
+						"resources": []interface{}{"pods"},
+						"verbs":     []interface{}{"get", "list"},
+					},
+					map[string]interface{}{
+						"apiGroups": []interface{}{""},
+						"resources": []interface{}{"namespaces"},
+						"verbs":     []interface{}{"get", "list"},
+					},
+				}),
+			},
+			mutsNew: []mutator{
+				setRulesUnstructured(t, []interface{}{}),
+			},
+			want: ".rules",
+		},
+		{
+			name: "Switch the rule order",
+			mutsOld: []mutator{
+				setRulesUnstructured(t, []interface{}{
+					map[string]interface{}{
+						"apiGroups": []interface{}{""},
+						"resources": []interface{}{"pods"},
+						"verbs":     []interface{}{"get", "list"},
+					},
+					map[string]interface{}{
+						"apiGroups": []interface{}{""},
+						"resources": []interface{}{"namespaces"},
+						"verbs":     []interface{}{"get", "list"},
+					},
+				}),
+			},
+			mutsNew: []mutator{
+				setRulesUnstructured(t, []interface{}{
+					map[string]interface{}{
+						"apiGroups": []interface{}{""},
+						"resources": []interface{}{"namespaces"},
+						"verbs":     []interface{}{"get", "list"},
+					},
+					map[string]interface{}{
+						"apiGroups": []interface{}{""},
+						"resources": []interface{}{"pods"},
+						"verbs":     []interface{}{"get", "list"},
+					},
+				}),
+			},
+			// TODO(b/297234996): the two objects are semantically equal, so the diff set should be empty.
+			want: ".rules",
 		},
 	}
 
@@ -196,8 +316,8 @@ func TestObjectDiffer_Unstructured(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			oldObj := unstructuredForTest()
-			newObj := unstructuredForTest(tc.muts...)
+			oldObj := unstructuredForTest(tc.mutsOld...)
+			newObj := unstructuredForTest(tc.mutsNew...)
 			got, err := od.FieldDiff(oldObj, newObj)
 			if err != nil {
 				t.Errorf("Got unexpected error: %v", err)
@@ -214,6 +334,16 @@ func setLabels(t *testing.T, labels map[string]interface{}) mutator {
 	return func(u *unstructured.Unstructured) {
 		t.Helper()
 		err := unstructured.SetNestedMap(u.Object, labels, "metadata", "labels")
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func setRulesUnstructured(t *testing.T, rules []interface{}) mutator {
+	return func(u *unstructured.Unstructured) {
+		t.Helper()
+		err := unstructured.SetNestedSlice(u.Object, rules, "rules")
 		if err != nil {
 			t.Fatal(err)
 		}
