@@ -45,7 +45,6 @@ import (
 	"kpt.dev/configsync/pkg/status"
 	syncertest "kpt.dev/configsync/pkg/syncer/syncertest/fake"
 	"kpt.dev/configsync/pkg/testing/fake"
-	"kpt.dev/configsync/pkg/testing/openapitest"
 	"kpt.dev/configsync/pkg/testing/testmetrics"
 	discoveryutil "kpt.dev/configsync/pkg/util/discovery"
 	"sigs.k8s.io/cli-utils/pkg/testutil"
@@ -138,7 +137,7 @@ func TestRoot_Parse(t *testing.T) {
 				fake.Role(core.Namespace("foo"),
 					core.Label(metadata.ManagedByKey, metadata.ManagedByValue),
 					core.Label(metadata.DeclaredVersionLabel, "v1"),
-					core.Annotation(metadata.DeclaredFieldsKey, `{"f:metadata":{"f:annotations":{},"f:labels":{}},"f:rules":{}}`),
+					core.Annotation(metadata.DeclaredFieldsKey, "/rules"),
 					core.Annotation(metadata.SourcePathAnnotationKey, "namespaces/foo/role.yaml"),
 					core.Annotation(metadata.ResourceManagementKey, metadata.ResourceManagementEnabled),
 					core.Annotation(metadata.GitContextKey, nilGitContext),
@@ -180,7 +179,7 @@ func TestRoot_Parse(t *testing.T) {
 				fake.Role(core.Namespace("foo"),
 					core.Label(metadata.ManagedByKey, metadata.ManagedByValue),
 					core.Label(metadata.DeclaredVersionLabel, "v1"),
-					core.Annotation(metadata.DeclaredFieldsKey, `{"f:metadata":{"f:annotations":{},"f:labels":{}},"f:rules":{}}`),
+					core.Annotation(metadata.DeclaredFieldsKey, "/rules"),
 					core.Annotation(metadata.SourcePathAnnotationKey, "namespaces/foo/role.yaml"),
 					core.Annotation(metadata.ResourceManagementKey, metadata.ResourceManagementEnabled),
 					core.Annotation(metadata.GitContextKey, nilGitContext),
@@ -210,7 +209,7 @@ func TestRoot_Parse(t *testing.T) {
 				fake.Role(core.Namespace("foo"),
 					core.Label(metadata.ManagedByKey, metadata.ManagedByValue),
 					core.Label(metadata.DeclaredVersionLabel, "v1"),
-					core.Annotation(metadata.DeclaredFieldsKey, `{"f:metadata":{"f:annotations":{},"f:labels":{}},"f:rules":{}}`),
+					core.Annotation(metadata.DeclaredFieldsKey, "/rules"),
 					core.Annotation(metadata.SourcePathAnnotationKey, "namespaces/foo/role.yaml"),
 					core.Annotation(metadata.ResourceManagementKey, metadata.ResourceManagementEnabled),
 					core.Annotation(metadata.GitContextKey, nilGitContext),
@@ -232,7 +231,7 @@ func TestRoot_Parse(t *testing.T) {
 				fake.Role(core.Namespace("foo"),
 					core.Label(metadata.ManagedByKey, metadata.ManagedByValue),
 					core.Label(metadata.DeclaredVersionLabel, "v1"),
-					core.Annotation(metadata.DeclaredFieldsKey, `{"f:metadata":{"f:annotations":{},"f:labels":{}},"f:rules":{}}`),
+					core.Annotation(metadata.DeclaredFieldsKey, "/rules"),
 					core.Annotation(metadata.SourcePathAnnotationKey, "namespaces/foo/role.yaml"),
 					core.Annotation(metadata.ResourceManagementKey, metadata.ResourceManagementEnabled),
 					core.Annotation(metadata.GitContextKey, nilGitContext),
@@ -254,7 +253,7 @@ func TestRoot_Parse(t *testing.T) {
 					fake.WithRootSyncSourceType(v1beta1.GitSource),
 					core.Label(metadata.ManagedByKey, metadata.ManagedByValue),
 					core.Label(metadata.DeclaredVersionLabel, "v1beta1"),
-					core.Annotation(metadata.DeclaredFieldsKey, `{"f:metadata":{"f:annotations":{},"f:labels":{}},"f:spec":{".":{},"f:git":{".":{},"f:auth":{},"f:period":{},"f:repo":{}},"f:sourceType":{}},"f:status":{".":{},"f:rendering":{".":{},"f:lastUpdate":{}},"f:source":{".":{},"f:lastUpdate":{}},"f:sync":{".":{},"f:lastUpdate":{}}}}`),
+					core.Annotation(metadata.DeclaredFieldsKey, "/spec/git/auth, /spec/git/period, /spec/git/repo, /spec/sourceType, /status/rendering/lastUpdate, /status/source/lastUpdate, /status/sync/lastUpdate"),
 					core.Annotation(metadata.SourcePathAnnotationKey, fmt.Sprintf("namespaces/%s/test.yaml", configsync.ControllerNamespace)),
 					core.Annotation(metadata.ResourceManagementKey, metadata.ResourceManagementEnabled),
 					core.Annotation(metadata.GitContextKey, nilGitContext),
@@ -288,7 +287,7 @@ func TestRoot_Parse(t *testing.T) {
 				fake.Role(core.Namespace("bar"),
 					core.Label(metadata.ManagedByKey, metadata.ManagedByValue),
 					core.Label(metadata.DeclaredVersionLabel, "v1"),
-					core.Annotation(metadata.DeclaredFieldsKey, `{"f:metadata":{"f:annotations":{},"f:labels":{}},"f:rules":{}}`),
+					core.Annotation(metadata.DeclaredFieldsKey, "/rules"),
 					core.Annotation(metadata.SourcePathAnnotationKey, "namespaces/foo/role.yaml"),
 					core.Annotation(metadata.ResourceManagementKey, metadata.ResourceManagementEnabled),
 					core.Annotation(metadata.GitContextKey, nilGitContext),
@@ -300,7 +299,7 @@ func TestRoot_Parse(t *testing.T) {
 				fake.ConfigMap(core.Namespace("bar"),
 					core.Label(metadata.ManagedByKey, metadata.ManagedByValue),
 					core.Label(metadata.DeclaredVersionLabel, "v1"),
-					core.Annotation(metadata.DeclaredFieldsKey, `{"f:metadata":{"f:annotations":{},"f:labels":{}}}`),
+					core.Annotation(metadata.DeclaredFieldsKey, ""),
 					core.Annotation(metadata.SourcePathAnnotationKey, "namespaces/foo/configmap.yaml"),
 					core.Annotation(metadata.ResourceManagementKey, metadata.ResourceManagementEnabled),
 					core.Annotation(metadata.GitContextKey, nilGitContext),
@@ -338,7 +337,7 @@ func TestRoot_Parse(t *testing.T) {
 				fake.Role(core.Namespace("foo"),
 					core.Label(metadata.ManagedByKey, metadata.ManagedByValue),
 					core.Label(metadata.DeclaredVersionLabel, "v1"),
-					core.Annotation(metadata.DeclaredFieldsKey, `{"f:metadata":{"f:annotations":{},"f:labels":{}},"f:rules":{}}`),
+					core.Annotation(metadata.DeclaredFieldsKey, "/rules"),
 					core.Annotation(metadata.SourcePathAnnotationKey, "namespaces/foo/role.yaml"),
 					core.Annotation(metadata.ResourceManagementKey, metadata.ResourceManagementEnabled),
 					core.Annotation(metadata.GitContextKey, nilGitContext),
@@ -362,7 +361,7 @@ func TestRoot_Parse(t *testing.T) {
 				fake.Role(core.Namespace("bar"),
 					core.Label(metadata.ManagedByKey, metadata.ManagedByValue),
 					core.Label(metadata.DeclaredVersionLabel, "v1"),
-					core.Annotation(metadata.DeclaredFieldsKey, `{"f:metadata":{"f:annotations":{},"f:labels":{}},"f:rules":{}}`),
+					core.Annotation(metadata.DeclaredFieldsKey, "/rules"),
 					core.Annotation(metadata.SourcePathAnnotationKey, "namespaces/foo/role.yaml"),
 					core.Annotation(metadata.ResourceManagementKey, metadata.ResourceManagementEnabled),
 					core.Annotation(metadata.GitContextKey, nilGitContext),
@@ -374,7 +373,7 @@ func TestRoot_Parse(t *testing.T) {
 				fake.ConfigMap(core.Namespace("bar"),
 					core.Label(metadata.ManagedByKey, metadata.ManagedByValue),
 					core.Label(metadata.DeclaredVersionLabel, "v1"),
-					core.Annotation(metadata.DeclaredFieldsKey, `{"f:metadata":{"f:annotations":{},"f:labels":{}}}`),
+					core.Annotation(metadata.DeclaredFieldsKey, ""),
 					core.Annotation(metadata.SourcePathAnnotationKey, "namespaces/foo/configmap.yaml"),
 					core.Annotation(metadata.ResourceManagementKey, metadata.ResourceManagementEnabled),
 					core.Annotation(metadata.GitContextKey, nilGitContext),
@@ -398,7 +397,7 @@ func TestRoot_Parse(t *testing.T) {
 				fake.Role(core.Namespace("baz"),
 					core.Label(metadata.ManagedByKey, metadata.ManagedByValue),
 					core.Label(metadata.DeclaredVersionLabel, "v1"),
-					core.Annotation(metadata.DeclaredFieldsKey, `{"f:metadata":{"f:annotations":{},"f:labels":{}},"f:rules":{}}`),
+					core.Annotation(metadata.DeclaredFieldsKey, "/rules"),
 					core.Annotation(metadata.SourcePathAnnotationKey, "namespaces/foo/role.yaml"),
 					core.Annotation(metadata.ResourceManagementKey, metadata.ResourceManagementEnabled),
 					core.Annotation(metadata.GitContextKey, nilGitContext),
@@ -410,7 +409,7 @@ func TestRoot_Parse(t *testing.T) {
 				fake.ConfigMap(core.Namespace("baz"),
 					core.Label(metadata.ManagedByKey, metadata.ManagedByValue),
 					core.Label(metadata.DeclaredVersionLabel, "v1"),
-					core.Annotation(metadata.DeclaredFieldsKey, `{"f:metadata":{"f:annotations":{},"f:labels":{}}}`),
+					core.Annotation(metadata.DeclaredFieldsKey, ""),
 					core.Annotation(metadata.SourcePathAnnotationKey, "namespaces/foo/configmap.yaml"),
 					core.Annotation(metadata.ResourceManagementKey, metadata.ResourceManagementEnabled),
 					core.Annotation(metadata.GitContextKey, nilGitContext),
@@ -423,11 +422,6 @@ func TestRoot_Parse(t *testing.T) {
 		},
 	}
 
-	converter, err := openapitest.ValueConverterForTest()
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			parser := &root{
@@ -438,7 +432,6 @@ func TestRoot_Parse(t *testing.T) {
 					reconcilerName:     rootReconcilerName,
 					client:             syncertest.NewClient(t, core.Scheme, fake.RootSyncObjectV1Beta1(rootSyncName)),
 					discoveryInterface: syncertest.NewDiscoveryClient(kinds.Namespace(), kinds.Role()),
-					converter:          converter,
 					updater: updater{
 						scope:      declared.RootReconciler,
 						resources:  &declared.Resources{},
@@ -593,7 +586,7 @@ func TestRoot_Parse_Discovery(t *testing.T) {
 				fake.Role(core.Namespace("foo"),
 					core.Label(metadata.ManagedByKey, metadata.ManagedByValue),
 					core.Label(metadata.DeclaredVersionLabel, "v1"),
-					core.Annotation(metadata.DeclaredFieldsKey, `{"f:metadata":{"f:annotations":{},"f:labels":{}},"f:rules":{}}`),
+					core.Annotation(metadata.DeclaredFieldsKey, "/rules"),
 					core.Annotation(metadata.SourcePathAnnotationKey, "namespaces/foo/role.yaml"),
 					core.Annotation(metadata.ResourceManagementKey, metadata.ResourceManagementEnabled),
 					core.Annotation(metadata.GitContextKey, nilGitContext),
@@ -630,7 +623,7 @@ func TestRoot_Parse_Discovery(t *testing.T) {
 				fake.Role(core.Namespace("foo"),
 					core.Label(metadata.ManagedByKey, metadata.ManagedByValue),
 					core.Label(metadata.DeclaredVersionLabel, "v1"),
-					core.Annotation(metadata.DeclaredFieldsKey, `{"f:metadata":{"f:annotations":{},"f:labels":{}},"f:rules":{}}`),
+					core.Annotation(metadata.DeclaredFieldsKey, "/rules"),
 					core.Annotation(metadata.SourcePathAnnotationKey, "namespaces/foo/role.yaml"),
 					core.Annotation(metadata.ResourceManagementKey, metadata.ResourceManagementEnabled),
 					core.Annotation(metadata.GitContextKey, nilGitContext),
@@ -642,7 +635,7 @@ func TestRoot_Parse_Discovery(t *testing.T) {
 				fakeCRD(core.Name("anvils.acme.com"),
 					core.Label(metadata.ManagedByKey, metadata.ManagedByValue),
 					core.Label(metadata.DeclaredVersionLabel, "v1"),
-					core.Annotation(metadata.DeclaredFieldsKey, `{"f:metadata":{"f:annotations":{},"f:labels":{}},"f:spec":{"f:group":{},"f:names":{"f:kind":{},"f:plural":{},"f:singular":{}},"f:scope":{},"f:versions":{}},"f:status":{"f:acceptedNames":{"f:kind":{},"f:plural":{}},"f:conditions":{},"f:storedVersions":{}}}`),
+					core.Annotation(metadata.DeclaredFieldsKey, "/spec/group, /spec/names/kind, /spec/names/plural, /spec/names/singular, /spec/scope, /spec/versions, /status/acceptedNames/kind, /status/acceptedNames/plural, /status/conditions, /status/storedVersions"),
 					core.Annotation(metadata.SourcePathAnnotationKey, "cluster/crd.yaml"),
 					core.Annotation(metadata.ResourceManagementKey, metadata.ResourceManagementEnabled),
 					core.Annotation(metadata.GitContextKey, nilGitContext),
@@ -655,7 +648,7 @@ func TestRoot_Parse_Discovery(t *testing.T) {
 					core.Namespace("foo"),
 					core.Label(metadata.ManagedByKey, metadata.ManagedByValue),
 					core.Label(metadata.DeclaredVersionLabel, "v1"),
-					core.Annotation(metadata.DeclaredFieldsKey, `{"f:metadata":{"f:annotations":{},"f:labels":{}}}`),
+					core.Annotation(metadata.DeclaredFieldsKey, ""),
 					core.Annotation(metadata.ResourceManagerKey, ":root_my-rs"),
 					core.Annotation(metadata.SourcePathAnnotationKey, "namespaces/obj.yaml"),
 					core.Annotation(metadata.ResourceManagementKey, metadata.ResourceManagementEnabled),
@@ -668,11 +661,6 @@ func TestRoot_Parse_Discovery(t *testing.T) {
 		},
 	}
 
-	converter, err := openapitest.ValueConverterForTest()
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			parser := &root{
@@ -683,7 +671,6 @@ func TestRoot_Parse_Discovery(t *testing.T) {
 					reconcilerName:     rootReconcilerName,
 					client:             syncertest.NewClient(t, core.Scheme, fake.RootSyncObjectV1Beta1(rootSyncName)),
 					discoveryInterface: tc.discoveryClient,
-					converter:          converter,
 					updater: updater{
 						scope:      declared.RootReconciler,
 						resources:  &declared.Resources{},

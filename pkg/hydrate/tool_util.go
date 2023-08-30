@@ -31,7 +31,6 @@ import (
 	"kpt.dev/configsync/cmd/nomos/flags"
 	nomosparse "kpt.dev/configsync/cmd/nomos/parse"
 	"kpt.dev/configsync/pkg/client/restconfig"
-	"kpt.dev/configsync/pkg/declared"
 	"kpt.dev/configsync/pkg/importer/filesystem"
 	"kpt.dev/configsync/pkg/importer/filesystem/cmpath"
 	"kpt.dev/configsync/pkg/kmetrics"
@@ -290,7 +289,6 @@ func ValidateOptions(ctx context.Context, rootDir cmpath.Absolute, apiServerTime
 	}
 
 	var serverResourcer discovery.ServerResourcer = discovery.NoOpServerResourcer{}
-	var converter *declared.ValueConverter
 	if !flags.SkipAPIServer {
 		cfg, err := restconfig.NewRestConfig(apiServerTimeout)
 		if err != nil {
@@ -308,11 +306,6 @@ func ValidateOptions(ctx context.Context, rootDir cmpath.Absolute, apiServerTime
 		}
 
 		serverResourcer = dc
-
-		converter, err = declared.NewValueConverter(dc)
-		if err != nil {
-			return options, err
-		}
 	}
 
 	addFunc := vet.AddCachedAPIResources(rootDir.Join(vet.APIResourcesPath))
@@ -320,7 +313,6 @@ func ValidateOptions(ctx context.Context, rootDir cmpath.Absolute, apiServerTime
 	options.PolicyDir = cmpath.RelativeOS(rootDir.OSPath())
 	options.PreviousCRDs = syncedCRDs
 	options.BuildScoper = discovery.ScoperBuilder(serverResourcer, addFunc)
-	options.Converter = converter
 	options.AllowUnknownKinds = flags.SkipAPIServer
 	return options, nil
 }

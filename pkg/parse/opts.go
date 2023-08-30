@@ -19,7 +19,6 @@ import (
 	"sync"
 	"time"
 
-	"kpt.dev/configsync/pkg/declared"
 	"kpt.dev/configsync/pkg/importer/analyzer/ast"
 	"kpt.dev/configsync/pkg/importer/filesystem"
 	"kpt.dev/configsync/pkg/status"
@@ -63,10 +62,6 @@ type opts struct {
 	// discoveryInterface is how the parser learns what types are currently
 	// available on the cluster.
 	discoveryInterface discovery.ServerResourcer
-
-	// converter uses the discoveryInterface to encode the declared fields of
-	// objects in Git.
-	converter *declared.ValueConverter
 
 	// mux prevents status update conflicts.
 	mux *sync.Mutex

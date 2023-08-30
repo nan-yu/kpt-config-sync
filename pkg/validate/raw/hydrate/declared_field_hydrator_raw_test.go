@@ -20,7 +20,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"kpt.dev/configsync/clientgen/apis/scheme"
 	"kpt.dev/configsync/pkg/importer/analyzer/ast"
-	"kpt.dev/configsync/pkg/testing/openapitest"
 	"kpt.dev/configsync/pkg/validate/objects"
 )
 
@@ -379,13 +378,7 @@ spec:
 				t.Fatal(err)
 			}
 
-			converter, err := openapitest.ValueConverterForTest()
-			if err != nil {
-				t.Fatal(err)
-			}
-
 			objs := &objects.Raw{
-				Converter: converter,
 				Objects: []ast.FileObject{{
 					Unstructured: u,
 				}},

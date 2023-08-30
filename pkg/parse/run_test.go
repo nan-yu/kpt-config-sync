@@ -39,7 +39,6 @@ import (
 	"kpt.dev/configsync/pkg/status"
 	syncerFake "kpt.dev/configsync/pkg/syncer/syncertest/fake"
 	"kpt.dev/configsync/pkg/testing/fake"
-	"kpt.dev/configsync/pkg/testing/openapitest"
 	"sigs.k8s.io/cli-utils/pkg/testutil"
 )
 
@@ -49,11 +48,6 @@ const (
 
 func newParser(t *testing.T, fs FileSource, renderingEnabled bool) Parser {
 	parser := &root{}
-	converter, err := openapitest.ValueConverterForTest()
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	parser.sourceFormat = filesystem.SourceFormatUnstructured
 	parser.opts = opts{
 		parser:             filesystem.NewParser(&reader.File{}),
@@ -61,7 +55,6 @@ func newParser(t *testing.T, fs FileSource, renderingEnabled bool) Parser {
 		reconcilerName:     rootReconcilerName,
 		client:             syncerFake.NewClient(t, core.Scheme, fake.RootSyncObjectV1Beta1(rootSyncName)),
 		discoveryInterface: syncerFake.NewDiscoveryClient(kinds.Namespace(), kinds.Role()),
-		converter:          converter,
 		files:              files{FileSource: fs},
 		updater: updater{
 			scope:      declared.RootReconciler,

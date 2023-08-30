@@ -18,22 +18,15 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"kpt.dev/configsync/pkg/importer/analyzer/ast"
 	"kpt.dev/configsync/pkg/metadata"
 	"kpt.dev/configsync/pkg/testing/fake"
-	"kpt.dev/configsync/pkg/testing/openapitest"
 	"kpt.dev/configsync/pkg/validate/objects"
 )
 
 func TestDeclaredFields(t *testing.T) {
-	converter, err := openapitest.ValueConverterForTest()
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	testCases := []struct {
 		name string
 		objs *objects.Raw
@@ -42,7 +35,6 @@ func TestDeclaredFields(t *testing.T) {
 		{
 			name: "encode fields for Role with rules",
 			objs: &objects.Raw{
-				Converter: converter,
 				Objects: []ast.FileObject{
 					fake.FileObject(&unstructured.Unstructured{
 						Object: map[string]interface{}{
@@ -64,7 +56,6 @@ func TestDeclaredFields(t *testing.T) {
 				},
 			},
 			want: &objects.Raw{
-				Converter: converter,
 				Objects: []ast.FileObject{
 					fake.FileObject(&unstructured.Unstructured{
 						Object: map[string]interface{}{
@@ -74,7 +65,7 @@ func TestDeclaredFields(t *testing.T) {
 								"name":      "hello",
 								"namespace": "world",
 								"annotations": map[string]interface{}{
-									metadata.DeclaredFieldsKey: `{"f:metadata":{"f:annotations":{},"f:labels":{}},"f:rules":{}}`,
+									metadata.DeclaredFieldsKey: `/rules`,
 								},
 							},
 							"rules": []interface{}{
@@ -92,7 +83,6 @@ func TestDeclaredFields(t *testing.T) {
 		{
 			name: "encode fields for Role with a label",
 			objs: &objects.Raw{
-				Converter: converter,
 				Objects: []ast.FileObject{
 					fake.FileObject(&unstructured.Unstructured{
 						Object: map[string]interface{}{
@@ -110,7 +100,6 @@ func TestDeclaredFields(t *testing.T) {
 				},
 			},
 			want: &objects.Raw{
-				Converter: converter,
 				Objects: []ast.FileObject{
 					fake.FileObject(&unstructured.Unstructured{
 						Object: map[string]interface{}{
@@ -123,7 +112,7 @@ func TestDeclaredFields(t *testing.T) {
 									"this": "that",
 								},
 								"annotations": map[string]interface{}{
-									metadata.DeclaredFieldsKey: `{"f:metadata":{"f:annotations":{},"f:labels":{"f:this":{}}}}`,
+									metadata.DeclaredFieldsKey: `/metadata/labels/this`,
 								},
 							},
 						},
@@ -134,7 +123,6 @@ func TestDeclaredFields(t *testing.T) {
 		{
 			name: "encode fields for Custom Resource",
 			objs: &objects.Raw{
-				Converter: converter,
 				Objects: []ast.FileObject{
 					fake.FileObject(&unstructured.Unstructured{
 						Object: map[string]interface{}{
@@ -154,7 +142,6 @@ func TestDeclaredFields(t *testing.T) {
 				},
 			},
 			want: &objects.Raw{
-				Converter: converter,
 				Objects: []ast.FileObject{
 					fake.FileObject(&unstructured.Unstructured{
 						Object: map[string]interface{}{
@@ -164,7 +151,7 @@ func TestDeclaredFields(t *testing.T) {
 								"name":      "heavy",
 								"namespace": "foo",
 								"annotations": map[string]interface{}{
-									metadata.DeclaredFieldsKey: `{"f:metadata":{"f:annotations":{},"f:labels":{}},"f:spec":{".":{},"f:lbs":{}}}`,
+									metadata.DeclaredFieldsKey: `/spec/lbs`,
 								},
 							},
 							"spec": map[string]interface{}{
@@ -177,14 +164,12 @@ func TestDeclaredFields(t *testing.T) {
 		},
 	}
 
-	ignoreConverter := cmpopts.IgnoreFields(objects.Raw{}, "Converter")
-
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if errs := DeclaredFields(tc.objs); errs != nil {
 				t.Errorf("Got DeclaredFields() error %v, want nil", errs)
 			}
-			if diff := cmp.Diff(tc.want, tc.objs, ast.CompareFileObject, ignoreConverter); diff != "" {
+			if diff := cmp.Diff(tc.want, tc.objs, ast.CompareFileObject); diff != "" {
 				t.Error(diff)
 			}
 		})

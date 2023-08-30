@@ -56,11 +56,6 @@ import (
 
 // NewRootRunner creates a new runnable parser for parsing a Root repository.
 func NewRootRunner(clusterName, syncName, reconcilerName string, format filesystem.SourceFormat, fileReader reader.Reader, c client.Client, pollingPeriod, resyncPeriod, retryPeriod, statusUpdatePeriod time.Duration, fs FileSource, dc discovery.DiscoveryInterface, resources *declared.Resources, app applier.Applier, rem remediator.Interface, renderingEnabled bool) (Parser, error) {
-	converter, err := declared.NewValueConverter(dc)
-	if err != nil {
-		return nil, err
-	}
-
 	return &root{
 		opts: opts{
 			clusterName:        clusterName,
@@ -80,7 +75,6 @@ func NewRootRunner(clusterName, syncName, reconcilerName string, format filesyst
 				remediator: rem,
 			},
 			discoveryInterface: dc,
-			converter:          converter,
 			mux:                &sync.Mutex{},
 			renderingEnabled:   renderingEnabled,
 		},
@@ -136,7 +130,6 @@ func (p *root) parseSource(_ context.Context, state sourceState) ([]ast.FileObje
 		PolicyDir:      p.SyncDir,
 		PreviousCRDs:   crds,
 		BuildScoper:    builder,
-		Converter:      p.converter,
 	}
 	options = OptionsForScope(options, p.scope)
 

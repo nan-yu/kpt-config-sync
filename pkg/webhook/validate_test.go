@@ -31,7 +31,6 @@ import (
 	"kpt.dev/configsync/pkg/importer"
 	csmetadata "kpt.dev/configsync/pkg/metadata"
 	"kpt.dev/configsync/pkg/testing/fake"
-	"kpt.dev/configsync/pkg/testing/openapitest"
 	"sigs.k8s.io/cli-utils/pkg/common"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -80,7 +79,7 @@ func TestValidator_Handle(t *testing.T) {
 						Verbs:     []string{"get", "list"},
 					},
 				}),
-				core.Annotation(csmetadata.DeclaredFieldsKey, `{"f:metadata":{"f:labels":{"f:app.kubernetes.io/managed-by":{}},"f:annotations":{"f:configmanagement.gke.io/managed":{}}},"f:rules":{}}`),
+				core.Annotation(csmetadata.DeclaredFieldsKey, "/metadata/labels/app.kubernetes.io~1managed-by, /metadata/annotations/configmanagement.gke.io~1managed, /rules"),
 			),
 			user: configSyncImporter(),
 		},
@@ -99,7 +98,7 @@ func TestValidator_Handle(t *testing.T) {
 						Verbs:     []string{"get", "list"},
 					},
 				}),
-				core.Annotation(csmetadata.DeclaredFieldsKey, `{"f:metadata":{"f:labels":{"f:app.kubernetes.io/managed-by":{}},"f:annotations":{"f:configmanagement.gke.io/managed":{},"f:configsync.gke.io/manager":{}}},"f:rules":{}}`),
+				core.Annotation(csmetadata.DeclaredFieldsKey, "/metadata/labels/app.kubernetes.io~1managed-by, /metadata/annotations/configmanagement.gke.io~1managed, /metadata/annotations/configsync.gke.io~1manager, /rules"),
 			),
 			user: configSyncRootReconciler(rootSyncName),
 		},
@@ -118,7 +117,7 @@ func TestValidator_Handle(t *testing.T) {
 						Verbs:     []string{"get", "list"},
 					},
 				}),
-				core.Annotation(csmetadata.DeclaredFieldsKey, `{"f:metadata":{"f:labels":{"f:app.kubernetes.io/managed-by":{}},"f:annotations":{"f:configmanagement.gke.io/managed":{},"f:configsync.gke.io/manager":{}}},"f:rules":{}}`),
+				core.Annotation(csmetadata.DeclaredFieldsKey, "/metadata/app.kubernetes.io~1managed-by, /metadata/annotations/configmanagement.gke.io~1managed, /metadata/annotations/configsync.gke.io~1manager, /rules"),
 			),
 			user: configSyncRootReconciler(rootSyncName),
 		},
@@ -137,7 +136,7 @@ func TestValidator_Handle(t *testing.T) {
 						Verbs:     []string{"get", "list"},
 					},
 				}),
-				core.Annotation(csmetadata.DeclaredFieldsKey, `{"f:metadata":{"f:labels":{"f:app.kubernetes.io/managed-by":{}},"f:annotations":{"f:configmanagement.gke.io/managed":{},"f:configsync.gke.io/manager":{}}},"f:rules":{}}`),
+				core.Annotation(csmetadata.DeclaredFieldsKey, "/metadata/labels/app.kubernetes.io~1managed-by, /metadata/annotations/configmanagement.gke.io~1managed, /metadata/annotations/configsync.gke.io~1manager, /rules"),
 			),
 			user: configSyncNamespaceReconciler("bookstore", repoSyncName),
 		},
@@ -156,7 +155,7 @@ func TestValidator_Handle(t *testing.T) {
 						Verbs:     []string{"get", "list"},
 					},
 				}),
-				core.Annotation(csmetadata.DeclaredFieldsKey, `{"f:metadata":{"f:labels":{"f:app.kubernetes.io/managed-by":{}},"f:annotations":{"f:configmanagement.gke.io/managed":{},"f:configsync.gke.io/manager":{}}},"f:rules":{}}`),
+				core.Annotation(csmetadata.DeclaredFieldsKey, "/metadata/labels/app.kubernetes.io~1managed-by, /metadata/annotations/configmanagement.gke.io~1managed, /metadata/annotations/onfigsync.gke.io~1manager, /rules"),
 			),
 			user: configSyncNamespaceReconciler("bookstore", repoSyncName),
 			deny: metav1.StatusReasonUnauthorized,
@@ -176,7 +175,7 @@ func TestValidator_Handle(t *testing.T) {
 						Verbs:     []string{"get", "list"},
 					},
 				}),
-				core.Annotation(csmetadata.DeclaredFieldsKey, `{"f:metadata":{"f:labels":{"f:app.kubernetes.io/managed-by":{}},"f:annotations":{"f:configmanagement.gke.io/managed":{},"f:configsync.gke.io/manager":{}}},"f:rules":{}}`),
+				core.Annotation(csmetadata.DeclaredFieldsKey, "/metadata/labels/app.kubernetes.io~1managed-by, /metadata/annotations/configmanagement.gke.io~1managed, /metadata/annotations/onfigsync.gke.io~1manager, /rules"),
 			),
 			user: configSyncNamespaceReconciler("bookstore", repoSyncName),
 			deny: metav1.StatusReasonUnauthorized,
@@ -344,7 +343,7 @@ func TestValidator_Handle(t *testing.T) {
 						Verbs:     []string{"get", "list"},
 					},
 				}),
-				core.Annotation(csmetadata.DeclaredFieldsKey, `{"f:metadata":{"f:labels":{"f:app.kubernetes.io/managed-by":{}},"f:annotations":{"f:configmanagement.gke.io/managed":{}}},"f:rules":{}}`),
+				core.Annotation(csmetadata.DeclaredFieldsKey, "/metadata/labels/app.kubernetes.io~1managed-by, /metadata/annotations/configmanagement.gke.io~1managed, /rules"),
 			),
 			user: bob(),
 			deny: metav1.StatusReasonUnauthorized,
@@ -364,7 +363,7 @@ func TestValidator_Handle(t *testing.T) {
 						Verbs:     []string{"get", "list"},
 					},
 				}),
-				core.Annotation(csmetadata.DeclaredFieldsKey, `{"f:metadata":{"f:labels":{"f:app.kubernetes.io/managed-by":{}},"f:annotations":{"f:configmanagement.gke.io/managed":{}}},"f:rules":{}}`),
+				core.Annotation(csmetadata.DeclaredFieldsKey, "/metadata/labels/app.kubernetes.io~1managed-by, /metadata/annotations/configmanagement.gke.io~1managed, /rules"),
 			),
 			user: bob(),
 			deny: metav1.StatusReasonUnauthorized,
@@ -384,7 +383,7 @@ func TestValidator_Handle(t *testing.T) {
 						Verbs:     []string{"get", "list"},
 					},
 				}),
-				core.Annotation(csmetadata.DeclaredFieldsKey, `{"f:metadata":{"f:labels":{"f:app.kubernetes.io/managed-by":{}},"f:annotations":{"f:configmanagement.gke.io/managed":{}}},"f:rules":{}}`),
+				core.Annotation(csmetadata.DeclaredFieldsKey, "/metadata/labels/app.kubernetes.io~1managed-by, /metadata/annotations/configmanagement.gke.io~1managed, /rules"),
 			),
 			newObj: fake.RoleObject(
 				core.Name("hello"),
@@ -400,7 +399,7 @@ func TestValidator_Handle(t *testing.T) {
 						Verbs:     []string{"get", "list"},
 					},
 				}),
-				core.Annotation(csmetadata.DeclaredFieldsKey, `{"f:metadata":{"f:labels":{"f:app.kubernetes.io/managed-by":{}},"f:annotations":{"f:configmanagement.gke.io/managed":{}}},"f:rules":{}}`),
+				core.Annotation(csmetadata.DeclaredFieldsKey, "/metadata/labels/app.kubernetes.io~1managed-by, /metadata/annotations/configmanagement.gke.io~1managed, /rules"),
 			),
 			user: bob(),
 		},
@@ -419,7 +418,7 @@ func TestValidator_Handle(t *testing.T) {
 						Verbs:     []string{"get", "list"},
 					},
 				}),
-				core.Annotation(csmetadata.DeclaredFieldsKey, `{"f:metadata":{"f:labels":{"f:app.kubernetes.io/managed-by":{}},"f:annotations":{"f:configmanagement.gke.io/managed":{}}},"f:rules":{}}`),
+				core.Annotation(csmetadata.DeclaredFieldsKey, "/metadata/labels/app.kubernetes.io~1managed-by, /metadata/annotations/configmanagement.gke.io~1managed, /rules"),
 			),
 			newObj: fake.RoleObject(
 				core.Name("hello"),
@@ -434,7 +433,7 @@ func TestValidator_Handle(t *testing.T) {
 						Verbs:     []string{"*"},
 					},
 				}),
-				core.Annotation(csmetadata.DeclaredFieldsKey, `{"f:metadata":{"f:labels":{"f:app.kubernetes.io/managed-by":{}},"f:annotations":{"f:configmanagement.gke.io/managed":{}}},"f:rules":{}}`),
+				core.Annotation(csmetadata.DeclaredFieldsKey, "/metadata/labels/app.kubernetes.io~1managed-by, /metadata/annotations/configmanagement.gke.io~1managed, /rules"),
 			),
 			user: bob(),
 			deny: metav1.StatusReasonForbidden,
@@ -454,7 +453,7 @@ func TestValidator_Handle(t *testing.T) {
 						Verbs:     []string{"get", "list"},
 					},
 				}),
-				core.Annotation(csmetadata.DeclaredFieldsKey, `{"f:metadata":{"f:labels":{"f:app.kubernetes.io/managed-by":{}},"f:annotations":{"f:configmanagement.gke.io/managed":{}}},"f:rules":{}}`),
+				core.Annotation(csmetadata.DeclaredFieldsKey, "/metadata/labels/app.kubernetes.io~1managed-by, /metadata/annotations/configmanagement.gke.io~1managed, /rules"),
 			),
 			newObj: fake.RoleObject(
 				core.Name("hello"),
@@ -469,7 +468,7 @@ func TestValidator_Handle(t *testing.T) {
 						Verbs:     []string{"get", "list"},
 					},
 				}),
-				core.Annotation(csmetadata.DeclaredFieldsKey, `{"f:metadata":{"f:labels":{"f:app.kubernetes.io/managed-by":{}},"f:annotations":{"f:configmanagement.gke.io/managed":{}}},"f:rules":{}}`),
+				core.Annotation(csmetadata.DeclaredFieldsKey, "/metadata/labels/app.kubernetes.io~1managed-by, /metadata/annotations/configmanagement.gke.io~1managed, /rules"),
 			),
 			user: bob(),
 			deny: metav1.StatusReasonForbidden,
@@ -488,7 +487,7 @@ func TestValidator_Handle(t *testing.T) {
 						Verbs:     []string{"get", "list"},
 					},
 				}),
-				core.Annotation(csmetadata.DeclaredFieldsKey, `{"f:metadata":{"f:labels":{"f:app.kubernetes.io/managed-by":{}},"f:annotations":{"f:configmanagement.gke.io/managed":{}}},"f:rules":{}}`),
+				core.Annotation(csmetadata.DeclaredFieldsKey, "/metadata/labels/app.kubernetes.io~1managed-by, /metadata/annotations/configmanagement.gke.io~1managed, /rules"),
 			),
 			newObj: fake.RoleObject(
 				core.Name("hello"),
@@ -502,7 +501,7 @@ func TestValidator_Handle(t *testing.T) {
 						Verbs:     []string{"get", "list"},
 					},
 				}),
-				core.Annotation(csmetadata.DeclaredFieldsKey, `{"f:metadata":{"f:labels":{"f:app.kubernetes.io/managed-by":{}},"f:annotations":{"f:configmanagement.gke.io/managed":{}}},"f:rules":{}}`),
+				core.Annotation(csmetadata.DeclaredFieldsKey, "/metadata/labels/app.kubernetes.io~1managed-by, /metadata/annotations/configmanagement.gke.io~1managed, /rules"),
 			),
 			user: bob(),
 		},
@@ -616,7 +615,7 @@ func TestValidator_Handle(t *testing.T) {
 		},
 	}
 
-	v := validatorForTest(t)
+	v := &Validator{}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -635,15 +634,6 @@ func TestValidator_Handle(t *testing.T) {
 			}
 		})
 	}
-}
-
-func validatorForTest(t *testing.T) *Validator {
-	vc, err := openapitest.ValueConverterForTest()
-	if err != nil {
-		t.Fatalf("Failed to create ValueConverter: %v", err)
-	}
-	od := &ObjectDiffer{converter: vc}
-	return &Validator{differ: od}
 }
 
 func configSyncImporter() authenticationv1.UserInfo {

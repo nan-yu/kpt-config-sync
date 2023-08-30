@@ -22,8 +22,6 @@ import (
 	admissionv1 "k8s.io/api/admission/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 	"kpt.dev/configsync/pkg/core"
 	"kpt.dev/configsync/pkg/declared"
@@ -39,37 +37,15 @@ import (
 )
 
 // AddValidator adds the admission webhook validator to the passed manager.
-func AddValidator(mgr manager.Manager) error {
-	handler, err := handler(mgr.GetConfig())
-	if err != nil {
-		return err
-	}
-	mgr.GetWebhookServer().Register(configuration.ServingPath, &webhook.Admission{
-		Handler: handler,
-	})
-	return nil
+func AddValidator(mgr manager.Manager) {
+	mgr.GetWebhookServer().Register(configuration.ServingPath, &webhook.Admission{})
 }
 
 // Validator is the part of the validating webhook which handles admission
 // requests and admits or denies them.
-type Validator struct {
-	differ *ObjectDiffer
-}
+type Validator struct{}
 
 var _ admission.Handler = &Validator{}
-
-// Handler returns a Validator which satisfies the admission.Handler interface.
-func handler(cfg *rest.Config) (*Validator, error) {
-	dc, err := discovery.NewDiscoveryClientForConfig(cfg)
-	if err != nil {
-		return nil, err
-	}
-	vc, err := declared.NewValueConverter(dc)
-	if err != nil {
-		return nil, err
-	}
-	return &Validator{&ObjectDiffer{vc}}, nil
-}
 
 // Handle implements admission.Handler
 func (v *Validator) Handle(_ context.Context, req admission.Request) admission.Response {
@@ -154,7 +130,7 @@ func (v *Validator) handleUpdate(oldObj, newObj client.Object, username string) 
 	}
 
 	// Build a diff set between old and new objects.
-	diffSet, err := v.differ.FieldDiff(oldObj, newObj)
+	diffSet, err := FieldDiff(oldObj, newObj)
 	if err != nil {
 		klog.Errorf("Failed to generate field diff set for object %q: %v", core.GKNN(oldObj), err)
 		return allow()
@@ -162,9 +138,10 @@ func (v *Validator) handleUpdate(oldObj, newObj client.Object, username string) 
 
 	// If the diff set includes any ConfigSync labels or annotations, reject the
 	// request immediately.
-	if csSet := ConfigSyncMetadata(diffSet); !csSet.Empty() {
-		klog.Errorf("%s cannot modify Config Sync metadata of object %q: %s", username, core.GKNN(oldObj), csSet.String())
-		return deny(metav1.StatusReasonForbidden, fmt.Sprintf("%s cannot modify Config Sync metadata of object %q: %s", username, core.GKNN(oldObj), csSet.String()))
+	if csSet := ConfigSyncMetadata(diffSet); len(csSet) != 0 {
+		csSetString := declared.PathSetToString(csSet)
+		klog.Errorf("%s cannot modify Config Sync metadata of object %q: %s", username, core.GKNN(oldObj), csSetString)
+		return deny(metav1.StatusReasonForbidden, fmt.Sprintf("%s cannot modify Config Sync metadata of object %q: %s", username, core.GKNN(oldObj), csSetString))
 	}
 
 	if oldObj.GetAnnotations()[csmetadata.LifecycleMutationAnnotation] == csmetadata.IgnoreMutation {
@@ -183,10 +160,11 @@ func (v *Validator) handleUpdate(oldObj, newObj client.Object, username string) 
 
 	// If the diff set and declared set have any fields in common, reject the
 	// request. Otherwise allow it.
-	invalidSet := diffSet.Intersection(declaredSet)
-	if !invalidSet.Empty() {
-		klog.Errorf("%s cannot modify fields of object %q managed by Config Sync: %s", username, core.GKNN(oldObj), invalidSet.String())
-		return deny(metav1.StatusReasonForbidden, fmt.Sprintf("%s cannot modify fields of object %q managed by Config Sync: %s", username, core.GKNN(oldObj), invalidSet.String()))
+	invalidSet := intersect(diffSet, declaredSet)
+	if len(invalidSet) != 0 {
+		invalidFields := declared.PathSetToString(invalidSet)
+		klog.Errorf("%s cannot modify fields of object %q managed by Config Sync: %s", username, core.GKNN(oldObj), invalidFields)
+		return deny(metav1.StatusReasonForbidden, fmt.Sprintf("%s cannot modify fields of object %q managed by Config Sync: %s", username, core.GKNN(oldObj), invalidFields))
 	}
 	return allow()
 }

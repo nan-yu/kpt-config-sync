@@ -107,10 +107,7 @@ func main() {
 		<-certDone
 
 		setupLog.Info("registering validator for webhook")
-		if err := webhook.AddValidator(mgr); err != nil {
-			setupLog.Error(err, "unable to register validator for webhook")
-			os.Exit(1)
-		}
+		webhook.AddValidator(mgr)
 
 		// Initialize checker so the existing readycheck can delegate to it.
 		checker = mgr.GetWebhookServer().StartedChecker()

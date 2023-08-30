@@ -45,11 +45,6 @@ import (
 
 // NewNamespaceRunner creates a new runnable parser for parsing a Namespace repo.
 func NewNamespaceRunner(clusterName, syncName, reconcilerName string, scope declared.Scope, fileReader reader.Reader, c client.Client, pollingPeriod, resyncPeriod, retryPeriod, statusUpdatePeriod time.Duration, fs FileSource, dc discovery.DiscoveryInterface, resources *declared.Resources, app applier.Applier, rem remediator.Interface, renderingEnabled bool) (Parser, error) {
-	converter, err := declared.NewValueConverter(dc)
-	if err != nil {
-		return nil, err
-	}
-
 	return &namespace{
 		opts: opts{
 			clusterName:        clusterName,
@@ -69,7 +64,6 @@ func NewNamespaceRunner(clusterName, syncName, reconcilerName string, scope decl
 				remediator: rem,
 			},
 			discoveryInterface: dc,
-			converter:          converter,
 			mux:                &sync.Mutex{},
 			renderingEnabled:   renderingEnabled,
 		},
@@ -120,7 +114,6 @@ func (p *namespace) parseSource(_ context.Context, state sourceState) ([]ast.Fil
 		PolicyDir:      p.SyncDir,
 		PreviousCRDs:   crds,
 		BuildScoper:    builder,
-		Converter:      p.converter,
 	}
 	options = OptionsForScope(options, p.scope)
 

@@ -89,7 +89,7 @@ const (
 	ConfigMapAnnotationKey = configsync.ConfigSyncPrefix + "configmap"
 
 	// DeclaredFieldsKey is the annotation key that stores the declared configuration of
-	// a resource in Git. This uses the same format as the managed fields of server-side apply.
+	// a resource in Git. This uses the same format as the JSON Pointer (RFC 6901).
 	// This annotation is set by Config Sync on a managed resource.
 	DeclaredFieldsKey = configsync.ConfigSyncPrefix + "declared-fields"
 

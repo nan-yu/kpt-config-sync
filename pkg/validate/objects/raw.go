@@ -17,7 +17,6 @@ package objects
 import (
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/klog/v2"
-	"kpt.dev/configsync/pkg/declared"
 	"kpt.dev/configsync/pkg/importer/analyzer/ast"
 	"kpt.dev/configsync/pkg/importer/customresources"
 	"kpt.dev/configsync/pkg/importer/filesystem/cmpath"
@@ -40,7 +39,6 @@ type Raw struct {
 	Objects           []ast.FileObject
 	PreviousCRDs      []*v1beta1.CustomResourceDefinition
 	BuildScoper       utildiscovery.BuildScoperFunc
-	Converter         *declared.ValueConverter
 	AllowUnknownKinds bool
 }
 

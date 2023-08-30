@@ -381,6 +381,9 @@ github.com/stretchr/testify/require
 # github.com/vbatts/tar-split v0.11.2
 ## explicit; go 1.15
 github.com/vbatts/tar-split/archive/tar
+# github.com/wI2L/jsondiff v0.4.0
+## explicit; go 1.18
+github.com/wI2L/jsondiff
 # github.com/wk8/go-ordered-map v1.0.0
 ## explicit; go 1.14
 github.com/wk8/go-ordered-map

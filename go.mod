@@ -28,6 +28,7 @@ require (
 	github.com/spf13/cobra v1.6.1
 	github.com/spyzhov/ajson v0.7.2
 	github.com/stretchr/testify v1.8.1
+	github.com/wI2L/jsondiff v0.4.0
 	github.com/wk8/go-ordered-map v1.0.0
 	go.opencensus.io v0.24.0
 	go.uber.org/multierr v1.6.0

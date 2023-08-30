@@ -16,91 +16,116 @@ package webhook
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
+	"github.com/wI2L/jsondiff"
 	"kpt.dev/configsync/pkg/core"
 	"kpt.dev/configsync/pkg/declared"
 	csmetadata "kpt.dev/configsync/pkg/metadata"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/structured-merge-diff/v4/fieldpath"
 )
 
-// ObjectDiffer can compare two versions of an Object and report on any declared
-// fields which were modified between the two.
-type ObjectDiffer struct {
-	converter *declared.ValueConverter
-}
-
-// FieldSet returns a Set of the fields in the given Object.
-func (d *ObjectDiffer) FieldSet(obj client.Object) (*fieldpath.Set, error) {
-	value, err := d.converter.TypedValue(obj)
-	if err != nil {
-		return nil, err
-	}
-	return value.ToFieldSet()
-}
+const (
+	metadataAnnotations = "/metadata/annotations/"
+	metadataLabels      = "/metadata/labels/"
+)
 
 // FieldDiff returns a Set of the Object fields which are being modified
 // in the given Request that are also marked as fields declared in Git.
-func (d *ObjectDiffer) FieldDiff(oldObj, newObj client.Object) (*fieldpath.Set, error) {
-	oldValue, err := d.converter.TypedValue(oldObj)
+func FieldDiff(oldObj, newObj client.Object) (declared.PathSet, error) {
+	patch, err := jsondiff.Compare(oldObj, newObj, jsondiff.Equivalent())
 	if err != nil {
 		return nil, err
 	}
-	newValue, err := d.converter.TypedValue(newObj)
-	if err != nil {
-		return nil, err
-	}
-	cmp, err := oldValue.Compare(newValue)
-	if err != nil {
-		return nil, err
+	pathMap := map[string]struct{}{}
+	for _, op := range patch {
+		switch op.Type {
+		// Ideally we don't care about fields that are added since they will never
+		// overlap with declared fields.
+		// It checks the added fields here to validate no ConfigSync metadata is declared.
+		case jsondiff.OperationAdd, jsondiff.OperationReplace:
+			pathMap[stripListIndex(op.Path)] = struct{}{}
+		case jsondiff.OperationRemove:
+			switch oldVal := op.OldValue.(type) {
+			case map[string]interface{}:
+				for k := range oldVal {
+					pathMap[stripListIndex(op.Path+"/"+k)] = struct{}{}
+				}
+			default:
+				pathMap[stripListIndex(op.Path)] = struct{}{}
+			}
+		}
 	}
 
-	// We only check fields that were modified or removed. We don't care about
-	// fields that are added since they will never overlap with declared fields.
-	return cmp.Modified.Union(cmp.Removed).Union(cmp.Added), nil
+	var pathSet declared.PathSet
+	for path := range pathMap {
+		pathSet = append(pathSet, path)
+	}
+	declared.SortFieldSet(pathSet)
+	return pathSet, nil
 }
 
-var (
-	metadata     = "metadata"
-	annotations  = ".annotations."
-	labels       = ".labels."
-	metadataPath = fieldpath.PathElement{FieldName: &metadata}
-)
+// stripListIndex removes the List index from the provided path.
+//   - If the path contains a List field (with index or '-'), it removes
+//     everything after the index or '-'.
+//   - If the path doesn't contain a List field, it remains unchanged.
+func stripListIndex(path string) string {
+	var newPath []string
+	paths := strings.Split(path, "/")
+	for _, p := range paths {
+		if p == "-" {
+			return strings.Join(newPath, "/")
+		}
+		if _, err := strconv.Atoi(p); err == nil {
+			return strings.Join(newPath, "/")
+		}
+		newPath = append(newPath, p)
+	}
+	return path
+}
 
 // ConfigSyncMetadata returns all of the metadata fields in the given fieldpath
 // Set which are ConfigSync labels or annotations.
-func ConfigSyncMetadata(set *fieldpath.Set) *fieldpath.Set {
-	metadataSet := set.WithPrefix(metadataPath)
-
-	csSet := fieldpath.NewSet()
-	metadataSet.Iterate(func(path fieldpath.Path) {
-		s := path.String()
-		if strings.HasPrefix(s, annotations) {
-			s = s[len(annotations):]
-			if csmetadata.IsConfigSyncAnnotationKey(s) {
-				csSet.Insert(path)
-			}
-		} else if strings.HasPrefix(s, labels) {
-			s = s[len(labels):]
-			if csmetadata.IsConfigSyncLabelKey(s) {
-				csSet.Insert(path)
+func ConfigSyncMetadata(set declared.PathSet) declared.PathSet {
+	var csSet declared.PathSet
+	for _, path := range set {
+		if strings.HasPrefix(path, metadataAnnotations) {
+			annotation := strings.TrimPrefix(path, metadataAnnotations)
+			unescaped := declared.UnescapeField(annotation)
+			if csmetadata.IsConfigSyncAnnotationKey(unescaped) {
+				csSet = append(csSet, path)
 			}
 		}
-	})
+		if strings.HasPrefix(path, metadataLabels) {
+			label := strings.TrimPrefix(path, metadataLabels)
+			unescaped := declared.UnescapeField(label)
+			if csmetadata.IsConfigSyncLabelKey(unescaped) {
+				csSet = append(csSet, path)
+			}
+		}
+	}
 	return csSet
 }
 
 // DeclaredFields returns the declared fields for the given Object.
-func DeclaredFields(obj client.Object) (*fieldpath.Set, error) {
+func DeclaredFields(obj client.Object) (declared.PathSet, error) {
 	decls, ok := obj.GetAnnotations()[csmetadata.DeclaredFieldsKey]
 	if !ok {
 		return nil, fmt.Errorf("%s annotation is missing from %s", csmetadata.DeclaredFieldsKey, core.GKNN(obj))
 	}
+	return declared.PathSetFromString(decls), nil
+}
 
-	set := &fieldpath.Set{}
-	if err := set.FromJSON(strings.NewReader(decls)); err != nil {
-		return nil, err
+// intersect returns a Set containing paths which appear in both set1 and set2.
+func intersect(set1, set2 declared.PathSet) declared.PathSet {
+	var intersection declared.PathSet
+	for _, p1 := range set1 {
+		for _, p2 := range set2 {
+			if p1 == p2 {
+				intersection = append(intersection, p1)
+			}
+		}
 	}
-	return set, nil
+	return intersection
 }
