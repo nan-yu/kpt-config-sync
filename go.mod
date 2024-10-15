@@ -5,6 +5,7 @@ go 1.22.0
 require (
 	cloud.google.com/go/compute/metadata v0.3.0
 	cloud.google.com/go/monitoring v1.16.3
+	cloud.google.com/go/pubsub v1.33.0
 	cloud.google.com/go/trace v1.10.4
 	contrib.go.opencensus.io/exporter/ocagent v0.7.0
 	github.com/GoogleContainerTools/kpt v1.0.0-beta.46
@@ -69,6 +70,8 @@ require (
 )
 
 require (
+	cloud.google.com/go v0.110.10 // indirect
+	cloud.google.com/go/iam v1.1.5 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect

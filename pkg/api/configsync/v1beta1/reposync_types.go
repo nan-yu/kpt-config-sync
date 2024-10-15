@@ -77,6 +77,10 @@ type RepoSyncSpec struct {
 	// +optional
 	Helm *HelmRepoSync `json:"helm,omitempty"`
 
+	// PubSub contains the configuration for publishing PubSub messages
+	// +optional
+	*PubSub `json:"pubsub,omitempty"`
+
 	// override allows to override the settings for a namespace reconciler.
 	// +nullable
 	// +optional

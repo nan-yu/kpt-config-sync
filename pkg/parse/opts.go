@@ -23,6 +23,7 @@ import (
 	"kpt.dev/configsync/pkg/declared"
 	"kpt.dev/configsync/pkg/importer/analyzer/ast"
 	"kpt.dev/configsync/pkg/importer/filesystem"
+	"kpt.dev/configsync/pkg/pubsub"
 	"kpt.dev/configsync/pkg/status"
 	"kpt.dev/configsync/pkg/util/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -40,6 +41,15 @@ type Options struct {
 
 	// ClusterName is the name of the cluster we're syncing configuration to.
 	ClusterName string
+
+	// KubeNodeName is the name of the Kubernetes node that the reconciler is running on.
+	KubeNodeName string
+
+	// PubSubEnabled indicates whether to publish PubSub messages
+	PubSubEnabled bool
+
+	// PubSubTopic is the name of the PubSub topic
+	PubSubTopic string
 
 	// Client knows how to read objects from a Kubernetes cluster and update
 	// status.
@@ -87,6 +97,7 @@ type Parser interface {
 	setSourceStatus(ctx context.Context, newStatus *SourceStatus) error
 	setRenderingStatus(ctx context.Context, oldStatus, newStatus *RenderingStatus) error
 	SetSyncStatus(ctx context.Context, newStatus *SyncStatus) error
+	setLastPublishedMessage(ctx context.Context, messages map[pubsub.Status]pubsub.Message) error
 	options() *Options
 	// SyncErrors returns all the sync errors, including remediator errors,
 	// validation errors, applier errors, and watch update errors.

@@ -76,10 +76,23 @@ type RootSyncSpec struct {
 	// +optional
 	Helm *HelmRootSync `json:"helm,omitempty"`
 
+	// PubSub contains the configuration for publishing PubSub messages
+	// +optional
+	*PubSub `json:"pubsub,omitempty"`
+
 	// override allows to override the settings for a reconciler.
 	// +nullable
 	// +optional
 	Override *RootSyncOverrideSpec `json:"override,omitempty"`
+}
+
+// PubSub defines the configuration for publishing PubSub messages
+type PubSub struct {
+	// Enabled indicates whether to publish PubSub messages
+	Enabled bool `json:"enabled"`
+
+	// Topic specifies the PubSub message
+	Topic string `json:"string,omitempty"`
 }
 
 // RootSyncStatus defines the observed state of RootSync

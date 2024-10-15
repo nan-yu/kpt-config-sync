@@ -74,3 +74,29 @@ func GetAPIServerTimeout(d *metav1.Duration) string {
 	}
 	return d.Duration.String()
 }
+
+// GetPubSubEnabled returns whether PubSub is enabled.
+func (rs *RepoSyncSpec) GetPubSubEnabled() bool {
+	return rs.PubSub != nil && rs.PubSub.Enabled
+}
+
+// GetPubSubEnabled returns whether PubSub is enabled.
+func (rs *RootSyncSpec) GetPubSubEnabled() bool {
+	return rs.PubSub != nil && rs.PubSub.Enabled
+}
+
+// GetPubSubTopic returns whether the PubSub topic.
+func (rs *RepoSyncSpec) GetPubSubTopic() string {
+	if rs.PubSub == nil {
+		return ""
+	}
+	return rs.PubSub.Topic
+}
+
+// GetPubSubTopic returns whether the PubSub topic.
+func (rs *RootSyncSpec) GetPubSubTopic() string {
+	if rs.PubSub == nil {
+		return ""
+	}
+	return rs.PubSub.Topic
+}

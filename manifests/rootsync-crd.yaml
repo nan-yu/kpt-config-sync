@@ -532,6 +532,19 @@ spec:
                     pattern: ^(enabled|disabled|)$
                     type: string
                 type: object
+              pubsub:
+                description: PubSub contains the configuration for publishing PubSub
+                  messages
+                properties:
+                  enabled:
+                    description: Enabled indicates whether to publish PubSub messages
+                    type: boolean
+                  string:
+                    description: Topic specifies the PubSub message
+                    type: string
+                required:
+                - enabled
+                type: object
               sourceFormat:
                 description: |-
                   sourceFormat specifies how the repository is formatted.
@@ -693,6 +706,39 @@ spec:
                   - type
                   type: object
                 type: array
+              lastPublishedMessages:
+                additionalProperties:
+                  properties:
+                    RSName:
+                      type: string
+                    RSNamespace:
+                      type: string
+                    clusterName:
+                      type: string
+                    commit:
+                      type: string
+                    error:
+                      type: string
+                    nodeName:
+                      type: string
+                    projectID:
+                      type: string
+                    status:
+                      type: string
+                    topic:
+                      type: string
+                  required:
+                  - RSName
+                  - RSNamespace
+                  - clusterName
+                  - nodeName
+                  - projectID
+                  - status
+                  - topic
+                  type: object
+                description: LastPublishedMessages contains messages last published
+                  to Pub/Sub
+                type: object
               lastSyncedCommit:
                 description: |-
                   lastSyncedCommit describes the most recent hash that is successfully synced.
@@ -1709,6 +1755,19 @@ spec:
                     pattern: ^(enabled|disabled|)$
                     type: string
                 type: object
+              pubsub:
+                description: PubSub contains the configuration for publishing PubSub
+                  messages
+                properties:
+                  enabled:
+                    description: Enabled indicates whether to publish PubSub messages
+                    type: boolean
+                  topic:
+                    description: Topic specifies the PubSub message
+                    type: string
+                required:
+                - enabled
+                type: object
               sourceFormat:
                 description: |-
                   sourceFormat specifies how the repository is formatted.
@@ -1870,6 +1929,39 @@ spec:
                   - type
                   type: object
                 type: array
+              lastPublishedMessages:
+                additionalProperties:
+                  properties:
+                    RSName:
+                      type: string
+                    RSNamespace:
+                      type: string
+                    clusterName:
+                      type: string
+                    commit:
+                      type: string
+                    error:
+                      type: string
+                    nodeName:
+                      type: string
+                    projectID:
+                      type: string
+                    status:
+                      type: string
+                    topic:
+                      type: string
+                  required:
+                  - RSName
+                  - RSNamespace
+                  - clusterName
+                  - nodeName
+                  - projectID
+                  - status
+                  - topic
+                  type: object
+                description: LastPublishedMessages contains messages last published
+                  to Pub/Sub
+                type: object
               lastSyncedCommit:
                 description: |-
                   lastSyncedCommit describes the most recent hash that is successfully synced.

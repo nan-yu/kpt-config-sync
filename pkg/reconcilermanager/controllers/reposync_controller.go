@@ -909,6 +909,8 @@ func (r *RepoSyncReconciler) populateContainerEnvs(ctx context.Context, rs *v1be
 		}),
 		reconcilermanager.Reconciler: reconcilerEnvs(reconcilerOptions{
 			clusterName:       r.clusterName,
+			pubSubEnabled:     rs.Spec.GetPubSubEnabled(),
+			pubSubTopic:       rs.Spec.GetPubSubTopic(),
 			syncName:          rs.Name,
 			syncGeneration:    rs.Generation,
 			reconcilerName:    reconcilerName,

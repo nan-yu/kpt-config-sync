@@ -16,6 +16,7 @@ package parse
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -40,6 +41,7 @@ import (
 	"kpt.dev/configsync/pkg/kinds"
 	"kpt.dev/configsync/pkg/metadata"
 	"kpt.dev/configsync/pkg/metrics"
+	"kpt.dev/configsync/pkg/pubsub"
 	"kpt.dev/configsync/pkg/reconciler/namespacecontroller"
 	"kpt.dev/configsync/pkg/rootsync"
 	"kpt.dev/configsync/pkg/status"
@@ -507,6 +509,7 @@ func reconcilerStatusFromRSyncStatus(rsyncStatus v1beta1.Status, sourceType conf
 			Errs:       nil,
 			LastUpdate: rsyncStatus.Sync.LastUpdate,
 		},
+		LastPublishedMessages:      rsyncStatus.LastPublishedMessages,
 		SyncingConditionLastUpdate: syncingConditionLastUpdate,
 	}
 }
@@ -602,6 +605,28 @@ func setSyncStatusErrors(syncStatus *v1beta1.Status, cse []v1beta1.ConfigSyncErr
 		Truncated:  denominator != 1,
 	}
 	syncStatus.Sync.Errors = cse[0 : len(cse)/denominator]
+}
+
+func (p *root) setLastPublishedMessage(ctx context.Context, messages map[pubsub.Status]pubsub.Message) error {
+	//TODO add retry and truncation
+	status := make(map[string]interface{})
+	status["lastPublishedMessages"] = messages
+	data := make(map[string]interface{})
+	data["status"] = status
+	patch, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("encoding patch data: %v", err)
+	}
+	rs := &v1beta1.RootSync{}
+	rs.Namespace = configsync.ControllerNamespace
+	rs.Name = p.SyncName
+	if err = p.Client.Status().Patch(ctx, rs,
+		client.RawPatch(types.MergePatchType, patch),
+		client.FieldOwner(configsync.FieldManager),
+	); err != nil {
+		return fmt.Errorf("setting the lastPublishedMessage field in RootSync %q", rs.Name)
+	}
+	return nil
 }
 
 // summarizeErrorsForCommit summarizes the source, rendering, and sync errors

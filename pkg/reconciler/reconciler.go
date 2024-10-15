@@ -58,6 +58,12 @@ import (
 type Options struct {
 	// ClusterName is the name of the cluster we are parsing configuration for.
 	ClusterName string
+	// KubeNodeName is the name of the Kubernetes node.
+	KubeNodeName string
+	// PubSubEnabled indicates whether to publish PubSub messages
+	PubSubEnabled bool
+	// PubSubTopic is the name of the PubSub topic
+	PubSubTopic string
 	// FightDetectionThreshold is the rate of updates per minute to an API
 	// Resource at which the reconciler will log warnings about too many updates
 	// to the resource.
@@ -250,6 +256,9 @@ func Run(opts Options) {
 		Clock:              clock.RealClock{},
 		Parser:             filesystem.NewParser(&reader.File{}),
 		ClusterName:        opts.ClusterName,
+		KubeNodeName:       opts.KubeNodeName,
+		PubSubEnabled:      opts.PubSubEnabled,
+		PubSubTopic:        opts.PubSubTopic,
 		Client:             cl,
 		ReconcilerName:     opts.ReconcilerName,
 		SyncName:           opts.SyncName,

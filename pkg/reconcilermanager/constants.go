@@ -35,6 +35,16 @@ const (
 	// of the cluster.
 	ClusterNameKey = "CLUSTER_NAME"
 
+	// KubeNodeNameKey is the OS env variable key for the name
+	// of the Kubernetes node.
+	KubeNodeNameKey = "KUBE_NODE_NAME"
+
+	// PubSubEnabledKey is the OS env variable key for whether to publish PubSub messages.
+	PubSubEnabledKey = "PUBSUB_ENABLED"
+
+	// PubSubTopicKey is the OS env variable key for the PubSub topic.
+	PubSubTopicKey = "PUBSUB_TOPIC"
+
 	// ScopeKey is the OS env variable key for the scope of the
 	// reconciler and hydration controller.
 	ScopeKey = "SCOPE"

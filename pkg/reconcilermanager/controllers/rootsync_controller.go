@@ -781,6 +781,8 @@ func (r *RootSyncReconciler) populateContainerEnvs(ctx context.Context, rs *v1be
 		reconcilermanager.Reconciler: append(
 			reconcilerEnvs(reconcilerOptions{
 				clusterName:              r.clusterName,
+				pubSubEnabled:            rs.Spec.GetPubSubEnabled(),
+				pubSubTopic:              rs.Spec.GetPubSubTopic(),
 				syncName:                 rs.Name,
 				syncGeneration:           rs.Generation,
 				reconcilerName:           reconcilerName,

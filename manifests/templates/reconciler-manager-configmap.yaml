@@ -90,6 +90,11 @@ data:
            env:
            - name: KUBECACHEDIR
              value: "/.kube/cache"
+           - name: KUBE_NODE_NAME
+             valueFrom:
+               fieldRef:
+                 apiVersion: v1
+                 fieldPath: spec.nodeName
            volumeMounts:
            - name: repo
              mountPath: /repo

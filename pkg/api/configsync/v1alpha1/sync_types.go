@@ -16,6 +16,7 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kpt.dev/configsync/pkg/pubsub"
 )
 
 // Status provides a common type that is embedded in RepoSyncStatus and RootSyncStatus.
@@ -35,6 +36,9 @@ type Status struct {
 	// It can be a git commit hash, or an OCI image digest.
 	// +optional
 	LastSyncedCommit string `json:"lastSyncedCommit,omitempty"`
+
+	// LastPublishedMessages contains messages last published to Pub/Sub
+	LastPublishedMessages map[pubsub.Status]pubsub.Message `json:"lastPublishedMessages,omitempty"`
 
 	// source contains fields describing the status of a *Sync's source of
 	// truth.

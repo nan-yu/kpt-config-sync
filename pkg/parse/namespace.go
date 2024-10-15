@@ -16,6 +16,7 @@ package parse
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -23,6 +24,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
 	"kpt.dev/configsync/pkg/api/configsync"
 	"kpt.dev/configsync/pkg/api/configsync/v1beta1"
@@ -31,6 +33,7 @@ import (
 	"kpt.dev/configsync/pkg/importer/reader"
 	"kpt.dev/configsync/pkg/metadata"
 	"kpt.dev/configsync/pkg/metrics"
+	"kpt.dev/configsync/pkg/pubsub"
 	"kpt.dev/configsync/pkg/reposync"
 	"kpt.dev/configsync/pkg/status"
 	"kpt.dev/configsync/pkg/util/compare"
@@ -348,6 +351,28 @@ func (p *namespace) setSyncStatusWithRetries(ctx context.Context, newStatus *Syn
 			return p.setSyncStatusWithRetries(ctx, newStatus, denominator*2)
 		}
 		return status.APIServerError(err, fmt.Sprintf("failed to update the RepoSync sync status for the %v namespace", p.Scope))
+	}
+	return nil
+}
+
+func (p *namespace) setLastPublishedMessage(ctx context.Context, messages map[pubsub.Status]pubsub.Message) error {
+	//TODO add retry and truncation
+	status := make(map[string]interface{})
+	status["lastPublishedMessages"] = messages
+	data := make(map[string]interface{})
+	data["status"] = status
+	patch, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("encoding patch data: %v", err)
+	}
+	rs := &v1beta1.RepoSync{}
+	rs.Namespace = string(p.Scope)
+	rs.Name = p.SyncName
+	if err = p.Client.Status().Patch(ctx, rs,
+		client.RawPatch(types.MergePatchType, patch),
+		client.FieldOwner(configsync.FieldManager),
+	); err != nil {
+		return fmt.Errorf("setting the lastPublishedMessage field in RepoSync '%s/%s'", rs.Namespace, rs.Name)
 	}
 	return nil
 }

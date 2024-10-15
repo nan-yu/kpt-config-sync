@@ -40,6 +40,12 @@ import (
 var (
 	clusterName = flag.String(flags.clusterName, os.Getenv(reconcilermanager.ClusterNameKey),
 		"Cluster name to use for Cluster selection")
+	kubeNodeName = flag.String("kube-node-name", os.Getenv(reconcilermanager.KubeNodeNameKey),
+		"Kubernetes node name to use for Pub/Sub messages")
+	pubSubEnabled = flag.Bool("pubsub-enabled", util.EnvBool(reconcilermanager.PubSubEnabledKey, false),
+		"Whether to publish Pub/Sub messages")
+	pubSubTopic = flag.String("pubsub-topic", os.Getenv(reconcilermanager.PubSubTopicKey),
+		"Name of the Pub/Sub topic")
 	scopeStr = flag.String("scope", os.Getenv(reconcilermanager.ScopeKey),
 		"Scope of the reconciler, either a namespace or ':root'.")
 	syncName = flag.String("sync-name", os.Getenv(reconcilermanager.SyncNameKey),
@@ -175,6 +181,9 @@ func main() {
 
 	opts := reconciler.Options{
 		ClusterName:              *clusterName,
+		KubeNodeName:             *kubeNodeName,
+		PubSubEnabled:            *pubSubEnabled,
+		PubSubTopic:              *pubSubTopic,
 		FightDetectionThreshold:  *fightDetectionThreshold,
 		NumWorkers:               *workers,
 		ReconcilerScope:          scope,

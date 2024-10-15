@@ -71,6 +71,7 @@ const (
 type RunResult struct {
 	SourceChanged bool
 	Success       bool
+	Errors        status.MultiError
 }
 
 // RunFunc is the function signature of the function that starts the parse-apply-watch loop
@@ -84,7 +85,9 @@ func DefaultRunFunc(ctx context.Context, p Parser, trigger string, state *reconc
 	if state.status == nil {
 		reconcilerStatus, err := p.ReconcilerStatusFromCluster(ctx)
 		if err != nil {
-			state.invalidate(status.Append(nil, err))
+			errors := status.Append(nil, err)
+			state.invalidate(errors)
+			result.Errors = errors
 			return result
 		}
 		state.status = reconcilerStatus
@@ -111,7 +114,9 @@ func DefaultRunFunc(ctx context.Context, p Parser, trigger string, state *reconc
 			// If there were errors publishing the source status, stop, log them, and retry later
 			if setSourceStatusErr != nil {
 				// If there were fetch errors, log those too
-				state.invalidate(status.Append(gs.Errs, setSourceStatusErr))
+				errors := status.Append(gs.Errs, setSourceStatusErr)
+				state.invalidate(errors)
+				result.Errors = errors
 				return result
 			}
 			// Cache the latest source status in memory
@@ -121,6 +126,7 @@ func DefaultRunFunc(ctx context.Context, p Parser, trigger string, state *reconc
 		// If there were fetch errors, stop, log them, and retry later
 		if gs.Errs != nil {
 			state.invalidate(gs.Errs)
+			result.Errors = gs.Errs
 			return result
 		}
 	}
@@ -147,8 +153,9 @@ func DefaultRunFunc(ctx context.Context, p Parser, trigger string, state *reconc
 				state.status.RenderingStatus = rs
 				state.status.SyncingConditionLastUpdate = rs.LastUpdate
 			} else {
-				var m status.MultiError
-				state.invalidate(status.Append(m, setRenderingStatusErr))
+				errors := status.Append(nil, setRenderingStatusErr)
+				state.invalidate(errors)
+				result.Errors = errors
 			}
 			return result
 		}
@@ -162,7 +169,9 @@ func DefaultRunFunc(ctx context.Context, p Parser, trigger string, state *reconc
 				state.status.RenderingStatus = rs
 				state.status.SyncingConditionLastUpdate = rs.LastUpdate
 			}
-			state.invalidate(status.Append(rs.Errs, setRenderingStatusErr))
+			errors := status.Append(rs.Errs, setRenderingStatusErr)
+			state.invalidate(errors)
+			result.Errors = errors
 			return result
 		}
 	}
@@ -182,6 +191,7 @@ func DefaultRunFunc(ctx context.Context, p Parser, trigger string, state *reconc
 	}
 	if errs := read(ctx, p, trigger, state, ps); errs != nil {
 		state.invalidate(errs)
+		result.Errors = errs
 		return result
 	}
 
@@ -203,6 +213,7 @@ func DefaultRunFunc(ctx context.Context, p Parser, trigger string, state *reconc
 	errs := parseAndUpdate(ctx, p, trigger, state)
 	if errs != nil {
 		state.invalidate(errs)
+		result.Errors = errs
 		return result
 	}
 

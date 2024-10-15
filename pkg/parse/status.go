@@ -15,10 +15,12 @@
 package parse
 
 import (
+	"reflect"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kpt.dev/configsync/pkg/api/configsync"
+	"kpt.dev/configsync/pkg/pubsub"
 	"kpt.dev/configsync/pkg/status"
 )
 
@@ -35,6 +37,35 @@ type ReconcilerStatus struct {
 
 	// SyncingConditionLastUpdate tracks when the `Syncing` condition was updated most recently.
 	SyncingConditionLastUpdate metav1.Time
+
+	// LastPublishedMessages tracks last published messages
+	LastPublishedMessages map[pubsub.Status]pubsub.Message
+}
+
+// SetPublishedMessage updates the published message in the cache.
+// It also clears the cache with opposite status.
+func (s *ReconcilerStatus) SetPublishedMessage(msg pubsub.Message) {
+	if s.LastPublishedMessages == nil {
+		s.LastPublishedMessages = map[pubsub.Status]pubsub.Message{}
+	}
+	s.LastPublishedMessages[msg.Status] = msg
+
+	switch msg.Status {
+	case pubsub.ApplySucceeded:
+		delete(s.LastPublishedMessages, pubsub.ApplyFailed)
+	case pubsub.ApplyFailed:
+		delete(s.LastPublishedMessages, pubsub.ApplySucceeded)
+	case pubsub.ReconcileSucceeded:
+		delete(s.LastPublishedMessages, pubsub.ReconcileFailed)
+	case pubsub.ReconcileFailed:
+		delete(s.LastPublishedMessages, pubsub.ReconcileSucceeded)
+	}
+}
+
+// HasPubMessage checks if the message is already published.
+func (s *ReconcilerStatus) HasPubMessage(msg pubsub.Message) bool {
+	m, found := s.LastPublishedMessages[msg.Status]
+	return found && reflect.DeepEqual(m, msg)
 }
 
 // DeepCopy returns a deep copy of the receiver.

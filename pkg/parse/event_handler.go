@@ -20,7 +20,10 @@ import (
 
 	"k8s.io/klog/v2"
 	"kpt.dev/configsync/pkg/parse/events"
+	"kpt.dev/configsync/pkg/pubsub"
 	"kpt.dev/configsync/pkg/reconciler/namespacecontroller"
+	"kpt.dev/configsync/pkg/status"
+	"kpt.dev/configsync/pkg/util"
 )
 
 // EventHandler is a events.Subscriber implementation that handles events and
@@ -62,6 +65,45 @@ func (s *EventHandler) Handle(event events.Event) events.Result {
 	runFn := func(ctx context.Context, p Parser, trigger string, state *reconcilerState) RunResult {
 		result := s.Run(ctx, p, trigger, state)
 		eventResult.RunAttempted = true
+
+		if !p.options().PubSubEnabled {
+			return result
+		}
+		var errMsg string
+		var s pubsub.Status
+		if result.Errors != nil {
+			s = pubsub.ApplyFailed
+			errMsg = status.FormatSingleLine(result.Errors)
+		} else {
+			s = pubsub.ApplySucceeded
+		}
+		projectID, err := util.GetProjectID(ctx, p.K8sClient())
+		if err != nil {
+			klog.Error(err)
+		}
+		msg := pubsub.Message{
+			ProjectID:   projectID,
+			ClusterName: p.options().ClusterName,
+			NodeName:    p.options().KubeNodeName,
+			Topic:       p.options().PubSubTopic,
+			RSNamespace: p.options().Scope.SyncNamespace(),
+			RSName:      p.options().SyncName,
+			Commit:      state.cache.source.commit,
+			Status:      s,
+			Error:       errMsg,
+		}
+		if state.status.HasPubMessage(msg) {
+			klog.V(4).Infof("message has already been published to Pub/Sub topic %q with status %q", msg.Topic, s)
+			return result
+		}
+		if err := pubsub.Publish(msg.ProjectID, msg.Topic, msg); err != nil {
+			// TODO: retry with publish error or publish with best effort?
+			klog.Errorf("failed to publish message to topic %s: %v", msg.Topic, err)
+		}
+		state.status.SetPublishedMessage(msg)
+		if err := p.setLastPublishedMessage(ctx, state.status.LastPublishedMessages); err != nil {
+			klog.Error(err)
+		}
 		return result
 	}
 

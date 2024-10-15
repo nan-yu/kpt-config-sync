@@ -94,6 +94,8 @@ func hydrationEnvs(opts hydrationOptions) []corev1.EnvVar {
 
 type reconcilerOptions struct {
 	clusterName              string
+	pubSubEnabled            bool
+	pubSubTopic              string
 	syncName                 string
 	syncGeneration           int64
 	reconcilerName           string
@@ -153,6 +155,14 @@ func reconcilerEnvs(opts reconcilerOptions) []corev1.EnvVar {
 		corev1.EnvVar{
 			Name:  reconcilermanager.ClusterNameKey,
 			Value: opts.clusterName,
+		},
+		corev1.EnvVar{
+			Name:  reconcilermanager.PubSubEnabledKey,
+			Value: strconv.FormatBool(opts.pubSubEnabled),
+		},
+		corev1.EnvVar{
+			Name:  reconcilermanager.PubSubTopicKey,
+			Value: opts.pubSubTopic,
 		},
 		corev1.EnvVar{
 			Name:  reconcilermanager.ScopeKey,
